@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
-
 	"github.com/gin-gonic/gin"
+	"fmt"
 )
 
 type User struct {
@@ -40,6 +40,63 @@ func createUser(c *gin.Context) {
 	mutex.Unlock()
 
 	c.JSON(http.StatusCreated, newUser)
+}
+
+func deleteUser(c *gin.Context) {
+	id := c.Param("id")
+
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	var userID int
+	_, err := fmt.Sscanf(id, "%d", &userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
+
+	for i, user := range users {
+		if user.ID == userID {
+			users = append(users[:i], users[i+1:]...)
+			lastUpdateTime = time.Now()
+			c.JSON(http.StatusOK, gin.H{"message": "Usuario eliminado"})
+			return
+		}
+	}
+
+	c.JSON(http.StatusNotFound, gin.H{"error": "Usuario no encontrado"})
+}
+
+func updateUser(c *gin.Context) {
+	id := c.Param("id")
+	var updatedUser User
+
+	if err := c.ShouldBindJSON(&updatedUser); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	var userID int
+	_, err := fmt.Sscanf(id, "%d", &userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
+
+	for i, user := range users {
+		if user.ID == userID {
+			users[i].Name = updatedUser.Name
+			users[i].Email = updatedUser.Email
+			lastUpdateTime = time.Now()
+			c.JSON(http.StatusOK, users[i])
+			return
+		}
+	}
+
+	c.JSON(http.StatusNotFound, gin.H{"error": "Usuario no encontrado"})
 }
 
 func longPolling(c *gin.Context) {

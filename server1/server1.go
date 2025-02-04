@@ -3,14 +3,18 @@ package server1
 import "github.com/gin-gonic/gin"
 
 func StartServer1() {
-    r := gin.Default()
-    r.GET("/users", getUsers)
-    r.POST("/users", createUser)
-    r.GET("/longpoll", longPolling)
+	r := gin.Default()
 
-    r.GET("/", func(c *gin.Context) {
-        c.JSON(200, gin.H{"message": "Servidor 1 activo"})
-    })
+	r.GET("/users", getUsers)
+	r.POST("/users", createUser)
+	r.DELETE("/users/:id", deleteUser)  
+	r.PUT("/users/:id", updateUser)     
 
-    r.Run(":9090")
+	r.GET("/longpoll", longPolling)
+
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{"message": "Servidor 1 activo"})
+	})
+
+	r.Run(":9090")
 }
